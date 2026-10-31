@@ -30,6 +30,9 @@ final class AppIconService
 
     private const MASKABLE_SIZE = 512;
 
+    /** The browser tab. Small enough that every spare pixel counts. */
+    private const FAVICON_SIZE = 32;
+
     private const DIRECTORY = 'business/icons';
 
     /**
@@ -44,6 +47,12 @@ final class AppIconService
     private const ANY_PADDING = 0.08;
 
     private const MASKABLE_PADDING = 0.215;
+
+    /**
+     * A favicon is 32px on a good day. Margin that reads as breathing room
+     * at 512 is three wasted pixels here, so it is drawn nearly full bleed.
+     */
+    private const FAVICON_PADDING = 0.02;
 
     /**
      * The manifest's icon list, in the order a browser prefers.
@@ -77,6 +86,20 @@ final class AppIconService
         $urls = $this->fromLogo();
 
         return $urls === null ? '/apple-touch-icon.png' : $urls[192];
+    }
+
+    /**
+     * The browser tab icon, or null to fall back to the shipped favicon.
+     *
+     * A wordmark shrunk to 32px is mostly unreadable, but a tab icon is a
+     * recognition cue rather than something anyone reads, and the business's
+     * own colours do that job better than a generic mark.
+     */
+    public function faviconUrl(): ?string
+    {
+        $urls = $this->fromLogo();
+
+        return $urls === null ? null : $urls[self::FAVICON_SIZE];
     }
 
     /**
@@ -144,6 +167,7 @@ final class AppIconService
         }
 
         return [
+            self::FAVICON_SIZE => $this->url($disk, 'icon-32.png', $stamp),
             192 => $this->url($disk, 'icon-192.png', $stamp),
             512 => $this->url($disk, 'icon-512.png', $stamp),
             'maskable' => $this->url($disk, 'icon-maskable-512.png', $stamp),
@@ -176,7 +200,7 @@ final class AppIconService
      */
     private function files(): array
     {
-        return ['icon-192.png', 'icon-512.png', 'icon-maskable-512.png'];
+        return ['icon-32.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png'];
     }
 
     /**
@@ -201,6 +225,11 @@ final class AppIconService
             $disk->put(
                 self::DIRECTORY.'/icon-maskable-512.png',
                 $this->square($source, self::MASKABLE_SIZE, self::MASKABLE_PADDING),
+            );
+
+            $disk->put(
+                self::DIRECTORY.'/icon-32.png',
+                $this->square($source, self::FAVICON_SIZE, self::FAVICON_PADDING),
             );
         } finally {
             imagedestroy($source);

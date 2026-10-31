@@ -252,3 +252,46 @@ it('falls back when the settings point at a logo that is gone', function () {
 
     $this->get(route('manifest'))->assertJsonPath('icons.0.src', '/icons/icon-192.png');
 });
+
+it('puts the business logo in the browser tab', function () {
+    uploadLogo();
+    $this->actingAs(User::factory()->create());
+
+    $html = (string) $this->get(route('dashboard'))->getContent();
+
+    expect($html)->toContain('rel="icon" type="image/png" sizes="32x32" href="/storage/business/icons/icon-32.png')
+        // Only one set, or a browser may still pick the shipped mark.
+        ->not->toContain('/favicon.ico')
+        ->not->toContain('/favicon.svg');
+});
+
+it('falls back to the shipped favicon with no logo', function () {
+    Setting::put('logo_path', null);
+    $this->actingAs(User::factory()->create());
+
+    expect((string) $this->get(route('dashboard'))->getContent())
+        ->toContain('href="/favicon.ico"')
+        ->toContain('href="/favicon.svg"');
+});
+
+it('draws the tab icon at the size it claims', function () {
+    uploadLogo();
+    $this->get(route('manifest'));
+
+    $icon = (string) Storage::disk('public')->get('business/icons/icon-32.png');
+    [$width, $height] = (array) getimagesizefromstring($icon);
+
+    expect("{$width}x{$height}")->toBe('32x32');
+});
+
+it('redraws the whole set when one icon is missing', function () {
+    // The set grew after the first release: installs that already had a logo
+    // must pick up the new tab icon without anyone running a command.
+    uploadLogo();
+    $this->get(route('manifest'));
+    Storage::disk('public')->delete('business/icons/icon-32.png');
+
+    $this->get(route('manifest'));
+
+    expect(Storage::disk('public')->exists('business/icons/icon-32.png'))->toBeTrue();
+});

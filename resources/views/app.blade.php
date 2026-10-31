@@ -40,8 +40,15 @@
         <meta name="apple-mobile-web-app-title" content="{{ config('app.name', 'KiraBisnes') }}">
         <link rel="manifest" href="{{ route('manifest') }}">
 
-        <link rel="icon" href="/favicon.ico" sizes="any">
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+        {{-- The business's own logo when one has been uploaded. Only one set
+             is emitted: leaving the shipped icons declared alongside lets a
+             browser pick those instead. --}}
+        @if ($businessFavicon !== null)
+            <link rel="icon" type="image/png" sizes="32x32" href="{{ $businessFavicon }}">
+        @else
+            <link rel="icon" href="/favicon.ico" sizes="any">
+            <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+        @endif
         {{-- The business's logo when one has been uploaded; iOS never reads
              the manifest, so it needs its own link. --}}
         <link rel="apple-touch-icon" href="{{ $appleTouchIcon }}">

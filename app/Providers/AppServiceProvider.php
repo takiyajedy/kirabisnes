@@ -28,13 +28,18 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
 
-        // iOS reads one <link> rather than the manifest, so the layout needs
-        // the icon's URL. Composed rather than shared so it is only worked
-        // out for the page that prints it.
-        View::composer('app', fn (ViewInstance $view) => $view->with(
-            'appleTouchIcon',
-            $this->app->make(AppIconService::class)->appleTouchIconUrl(),
-        ));
+        // The tab icon and the iOS home screen icon are plain <link> tags,
+        // so the layout needs their URLs; neither is read from the manifest.
+        // Composed rather than shared so they are only worked out for the
+        // page that prints them.
+        View::composer('app', function (ViewInstance $view): void {
+            $icons = $this->app->make(AppIconService::class);
+
+            $view->with([
+                'appleTouchIcon' => $icons->appleTouchIconUrl(),
+                'businessFavicon' => $icons->faviconUrl(),
+            ]);
+        });
     }
 
     /**
