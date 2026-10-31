@@ -495,6 +495,7 @@ time_entries   (Fasa 5)
 - [x] Backup harian (`spatie/laravel-backup`) ke disk luaran (S3 / DO Spaces)
 - [x] 2FA untuk login
 - [x] PWA (manifest + ikon, `theme_color` berbeza untuk light/dark) supaya boleh "install" di telefon
+  - 2026-10-31: ikon skrin utama mengikut logo bisnes bila ada — dilukis semula menjadi PNG segi empat sama (192, 512, maskable 512) pada latar putih; `apple-touch-icon` sama, kerana iOS tidak membaca manifest
 - [x] Audit log ringkas untuk perubahan transaksi & invois
 
 ---
@@ -676,4 +677,8 @@ tests/Feature/  tests/Unit/
 | 2026-10-30 | Disk destinasi backup dibaca daripada `BACKUP_DISKS` dalam `.env` | Menghalakannya ke S3 atau Spaces kemudian ialah satu baris `.env`, bukan suntingan config |
 | 2026-10-30 | `backup:clean` 02:00 sebelum `backup:run` 02:15 | Supaya backup malam itu tidak pernah menjadi yang dibuang oleh clean-up |
 | 2026-10-30 | **Payment gateway ditangguh** — keputusan pemilik | ToyyibPay dan Billplz ada API berbeza, dan keduanya perlukan akaun merchant, kunci API, dan URL webhook yang boleh dicapai dari internet. Membinanya tanpa itu bermakna kod integrasi yang kelihatan siap tetapi tidak pernah diuji terhadap perkhidmatan sebenar. Bayaran manual sudah berfungsi: portal klien memaparkan maklumat bank, dan "Rekod Bayaran" mengagihkan duit ke tabung seperti biasa |
+| 2026-10-31 | Logo bisnes yang dimuat naik dipakai sebagai tanda aplikasi (bar sisi + halaman log masuk) melalui satu komponen `BusinessLogo` | Bar sisi dan halaman log masuk tidak boleh berakhir menunjukkan tanda berbeza. Logo yang dimuat naik ditunjukkan sendirian tanpa jubin emerald: kebanyakan logo bawa bentuk dan warna sendiri |
+| 2026-10-31 | Ikon skrin utama **dilukis semula** daripada logo (192, 512, maskable 512) dan bukan dihalakan terus kepada fail yang dimuat naik | Ikon skrin utama mesti PNG segi empat sama pada saiz yang diisytiharkan. Logo yang dimuat naik mungkin wordmark lebar, JPEG, apa-apa dimensi — dan ikon yang tidak sepadan dengan janji manifest menghilangkan prompt "install" |
+| 2026-10-31 | Ikon dilukis pada latar **putih legap**, muat-dalam (bukan dipotong) | iOS melukis ikon lutsinar atas hitam, dan logo yang direka untuk kertas akan hilang di situ. Wordmark yang dipotong kepada segi empat sama kehilangan separuh perkataannya |
+| 2026-10-31 | Ikon dijana malas (bila stale) dan bukan semasa muat naik sahaja | Logo yang sudah dimuat naik sebelum ciri ini wujud tetap dapat ikonnya tanpa langkah migrasi. Cap masa logo menjadi `?v=` pada URL, jadi browser yang cache set lama mengambil yang baharu |
 | | | |

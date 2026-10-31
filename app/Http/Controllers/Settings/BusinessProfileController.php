@@ -6,6 +6,7 @@ use App\Enums\Locale;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\BusinessProfileUpdateRequest;
 use App\Models\Setting;
+use App\Services\AppIconService;
 use App\Support\BusinessProfile;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
@@ -14,6 +15,8 @@ use Inertia\Response;
 
 class BusinessProfileController extends Controller
 {
+    public function __construct(private readonly AppIconService $icons) {}
+
     /**
      * Show the business profile settings page.
      */
@@ -73,5 +76,9 @@ class BusinessProfileController extends Controller
         if (is_string($existing) && $existing !== '') {
             Storage::disk('public')->delete($existing);
         }
+
+        // The home screen icons were drawn from that logo. A replacement is
+        // drawn again on the next request that needs one.
+        $this->icons->clear();
     }
 }

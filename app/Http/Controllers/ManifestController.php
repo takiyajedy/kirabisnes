@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\AppIconService;
 use App\Support\BusinessProfile;
 use Illuminate\Http\JsonResponse;
 
@@ -9,11 +10,13 @@ use Illuminate\Http\JsonResponse;
  * The web app manifest, so the app can be installed on a phone
  * (PLAN.md phase 6).
  *
- * Served rather than kept as a static file because the name on the home
- * screen should be the business's own, which lives in settings.
+ * Served rather than kept as a static file because the name and the icon on
+ * the home screen should be the business's own, and both live in settings.
  */
 class ManifestController extends Controller
 {
+    public function __construct(private readonly AppIconService $icons) {}
+
     public function __invoke(): JsonResponse
     {
         $name = BusinessProfile::all()['business_name'] ?: config('app.name');
@@ -33,27 +36,9 @@ class ManifestController extends Controller
             'theme_color' => '#059669',
             'lang' => app()->getLocale(),
             'dir' => 'ltr',
-            'icons' => [
-                [
-                    'src' => '/icons/icon-192.png',
-                    'sizes' => '192x192',
-                    'type' => 'image/png',
-                    'purpose' => 'any',
-                ],
-                [
-                    'src' => '/icons/icon-512.png',
-                    'sizes' => '512x512',
-                    'type' => 'image/png',
-                    'purpose' => 'any',
-                ],
-                [
-                    'src' => '/icons/icon-512.png',
-                    'sizes' => '512x512',
-                    'type' => 'image/png',
-                    // Android crops a maskable icon to its own shape.
-                    'purpose' => 'maskable',
-                ],
-            ],
+            // The business's own logo when one has been uploaded, and the
+            // built-in mark otherwise.
+            'icons' => $this->icons->manifestIcons(),
         ], 200, [
             'Content-Type' => 'application/manifest+json',
         ]);
