@@ -26,6 +26,11 @@ const emit = defineEmits<{
 }>();
 
 // The user types ringgit; the form keeps sen.
+//
+// Bound with v-model, not :value. Input declares no `value` prop, so :value
+// would arrive as a plain attribute and Input's own v-model would overwrite
+// it on mount — every amount already on the record would render as an empty
+// field, and typing into what looked blank would quietly replace it.
 const display = ref(props.modelValue ? toRinggit(props.modelValue) : '');
 
 watch(
@@ -37,21 +42,29 @@ watch(
     },
 );
 
-const onInput = (event: Event) => {
-    const raw = (event.target as HTMLInputElement).value;
-
-    display.value = raw;
+watch(display, (raw) => {
     emit('update:modelValue', toSen(raw));
+});
+
+/**
+ * Typing replaces the amount instead of appending to it.
+ *
+ * Without this, a field reading 150.00 takes a 5 as 150.005. Nobody edits a
+ * price by appending digits to the one already there.
+ */
+const onFocus = (event: FocusEvent) => {
+    (event.target as HTMLInputElement).select();
 };
 
 const onBlur = () => {
-    if (display.value.trim() === '') {
-        emit('update:modelValue', 0);
+    const sen = toSen(display.value);
 
-        return;
-    }
+    // Zero is left blank so the placeholder shows and the next thing typed
+    // starts a fresh number. A literal "0.00" sitting in the field turns a
+    // 5 into RM 0.05.
+    display.value = sen === 0 ? '' : toRinggit(sen);
 
-    display.value = toRinggit(toSen(display.value));
+    emit('update:modelValue', sen);
 };
 
 // A plain form posts what the user typed, in ringgit: the FormRequest is
@@ -68,7 +81,7 @@ const hiddenValue = computed(() => toRinggit(toSen(display.value)));
         </span>
         <Input
             :id="id"
-            :value="display"
+            v-model="display"
             type="text"
             inputmode="decimal"
             autocomplete="off"
@@ -76,7 +89,7 @@ const hiddenValue = computed(() => toRinggit(toSen(display.value)));
             :disabled="disabled"
             :required="required"
             :class="cn('pl-10 text-right tabular-nums', props.class)"
-            @input="onInput"
+            @focus="onFocus"
             @blur="onBlur"
         />
         <!-- Posted in ringgit; the server converts it to sen. -->
