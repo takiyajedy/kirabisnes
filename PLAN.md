@@ -497,6 +497,7 @@ time_entries   (Fasa 5)
 - [x] PWA (manifest + ikon, `theme_color` berbeza untuk light/dark) supaya boleh "install" di telefon
   - 2026-10-31: ikon skrin utama mengikut logo bisnes bila ada — dilukis semula menjadi PNG segi empat sama (192, 512, maskable 512) pada latar putih; `apple-touch-icon` sama, kerana iOS tidak membaca manifest
 - [x] Audit log ringkas untuk perubahan transaksi & invois
+- [x] **Pelayan MCP** (2026-11-04) — Claude boleh membaca buku dan merekod ke dalamnya melalui `POST /mcp`, dilindungi token bearer (`php artisan mcp:token`). 6 tool baca, 4 tool tulis; yang tulis ditanda `destructive`, dan `send_invoice` juga `openWorld` kerana ia menghantar e-mel kepada klien sebenar
 
 ---
 
@@ -681,4 +682,10 @@ tests/Feature/  tests/Unit/
 | 2026-10-31 | Ikon skrin utama **dilukis semula** daripada logo (192, 512, maskable 512) dan bukan dihalakan terus kepada fail yang dimuat naik | Ikon skrin utama mesti PNG segi empat sama pada saiz yang diisytiharkan. Logo yang dimuat naik mungkin wordmark lebar, JPEG, apa-apa dimensi — dan ikon yang tidak sepadan dengan janji manifest menghilangkan prompt "install" |
 | 2026-10-31 | Ikon dilukis pada latar **putih legap**, muat-dalam (bukan dipotong) | iOS melukis ikon lutsinar atas hitam, dan logo yang direka untuk kertas akan hilang di situ. Wordmark yang dipotong kepada segi empat sama kehilangan separuh perkataannya |
 | 2026-10-31 | Ikon dijana malas (bila stale) dan bukan semasa muat naik sahaja | Logo yang sudah dimuat naik sebelum ciri ini wujud tetap dapat ikonnya tanpa langkah migrasi. Cap masa logo menjadi `?v=` pada URL, jadi browser yang cache set lama mengambil yang baharu |
+| 2026-11-04 | **Pakej baharu: `laravel/mcp` ^1.1** (di luar Seksyen 2) | Satu-satunya cara rasmi menghidangkan MCP daripada Laravel. Alternatifnya ialah menulis pengangkutan JSON-RPC sendiri — kod protokol yang perlu dijaga selamanya untuk spesifikasi yang masih bergerak. Pakej Laravel sendiri, MIT, tiada kebergantungan luar selain `illuminate/*` |
+| 2026-11-04 | MCP dilindungi **satu token bearer** dalam `settings`, bukan Sanctum atau Passport OAuth | Buku ini milik satu orang; jadual token pengguna tidak menjawab soalan yang tidak ditanya. Sanctum dan Passport kedua-duanya pakej baharu lagi, dan Passport membawa keseluruhan pelayan OAuth untuk satu pemanggil. Token disimpan sebagai hash SHA-256: ia 160 bit rawak, bukan kata laluan, jadi bcrypt hanya menambah ~50ms di hadapan setiap panggilan tool tanpa faedah |
+| 2026-11-04 | MCP bercakap **ringgit**, bukan sen | Peraturan dalaman kekal sen. Tetapi agen yang diberitahu `amount: 12000` akan membacanya sebagai RM 12,000, bukan RM 120.00. Penukaran berlaku di sempadan dengan `Money::toSen()` — sempadan yang sama seperti setiap FormRequest |
+| 2026-11-04 | Setiap tool tulis melalui Action sedia ada, bukan `Model::create` | Pendapatan yang ditulis terus ke jadual tidak akan dipecahkan kepada tabung, dan bayaran yang ditulis terus meninggalkan invois tersekat pada "dihantar". Action itulah logik perniagaannya |
+| 2026-11-04 | `create_invoice` sentiasa menghasilkan **draf**, dan `send_invoice` memerlukan `confirm: true` | Semua yang lain menulis ke pangkalan data yang pemilik boleh betulkan. Menghantar invois meletakkan tuntutan wang dalam peti masuk orang lain dan tiada undo. Bendera berasingan bermakna model yang sekadar hanyut ke tool itu tidak akan menetapkannya |
+| 2026-11-04 | Tarikh dipulangkan sebagai `Y-m-d`, bukan cast Carbon mentah | Cast tarikh bersiri sebagai cap masa UTC: transaksi bertarikh 2026-11-04 keluar sebagai `2026-11-03T16:00:00Z` di Malaysia, dan agen akan melaporkan hari yang salah |
 | | | |
